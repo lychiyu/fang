@@ -4,6 +4,8 @@ import re
 import scrapy
 from scrapy import Request
 
+from fang.items import NewHouseItem
+
 
 class FangTxSpider(scrapy.Spider):
     name = 'fang_tx'
@@ -41,7 +43,28 @@ class FangTxSpider(scrapy.Spider):
                 yield Request(url=zu_link, callback=self.parse_zu_fang, meta={'city': (province, city_name)})
 
     def parse_new_fang(self, response):
-        pass
+        province, city = response.meta.get('city')
+        lis = response.xpath('//div[contains(@class, "nl_con")]/ul/li')
+        for li in lis:
+            name = li.xpath(".//div[@class='nlcd_name']/a/text()").get().strip()
+            house_type_list = li.xpath(".//div[contains(@class,'house_type')]/a/text()").getall()
+            house_type_list = list(map(lambda x: re.sub(r'\s', '', x), house_type_list))
+            rooms = list(filter(lambda x: x.endswith('居'), house_type_list))
+            area = ''.join(li.xpath(".//div[contains(@class,'house_type')]/text()").getall()).strip()
+            area = re.sub(r'\s|－|/|平米', '', area)
+            address = li.xpath(".//div[@class='address']/a/@title").get()
+            district_text = ''.join(li.xpath(".//div[@class='address']/a//text()").getall())
+            district = re.search(r'.*?\[(.*)\].*', district_text).group(1)
+            sale = li.xpath(".//div[contains(@class, 'fangyuan')]/span/text()").get()
+            price = ''.join(li.xpath(".//div[@class='nhouse_price']//text()").getall())
+            price = re.sub(r'\s|广告', '', price)
+            url = li.xpath(".//div[@class='nlcd_name']/a/@href").get()
+            item = NewHouseItem(province=province, city=city, name=name, rooms=rooms, area=area, address=address,
+                                district=district, sale=sale, price=price, url=url)
+            yield item
+        next_url = response.xpath("//div[@class='page']//a[@class='next']/@href").get()
+        if next_url:
+            yield scrapy.Request(url=response.urljoin(next_url), callback=self.parse_new_fang, meta={'city': (province, city)})
 
     def parse_esf_fang(self, response):
         pass
