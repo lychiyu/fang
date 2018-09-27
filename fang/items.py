@@ -19,3 +19,19 @@ class NewHouseItem(scrapy.Item):
     address = scrapy.Field()
     sale = scrapy.Field()
     url = scrapy.Field()
+
+
+class ESFHouseItem(scrapy.Item):
+    province = scrapy.Field()
+    city = scrapy.Field()
+    district = scrapy.Field()
+    name = scrapy.Field()
+    rooms = scrapy.Field()
+    floor = scrapy.Field()
+    toward = scrapy.Field()
+    year = scrapy.Field()
+    price = scrapy.Field()
+    unit = scrapy.Field()
+    area = scrapy.Field()
+    address = scrapy.Field()
+    url = scrapy.Field()
